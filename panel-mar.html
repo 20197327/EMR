@@ -1,0 +1,84 @@
+<!-- ════════════════════════════════════════
+     panel-mar.html
+     Medication Administration Record (MAR)
+     ════════════════════════════════════════ -->
+<div class="panel" id="panel-mar">
+  <div class="card">
+
+    <div class="card-hd">
+      <span class="card-title">Medication Administration Record</span>
+      <span class="badge b-blu" id="marDate"></span>
+    </div>
+
+    <!-- MAR Table -->
+    <table class="mart" id="marTbl" style="display:none">
+      <thead>
+        <tr>
+          <th>Medication</th>
+          <th>Dose / Route</th>
+          <th>Frequency</th>
+          <th>Admin. Times</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="marBody"></tbody>
+    </table>
+
+    <!-- Empty state -->
+    <div id="marEmpty" class="empty" style="padding:28px">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="5" y="3" width="10" height="14" rx="2" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M8 7h4M8 10h4M8 13h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <p>No medication orders yet.<br>Use the form below to add an order.</p>
+    </div>
+
+    <div class="divider">Add Medication Order</div>
+
+    <div class="g2" style="margin-bottom:10px">
+      <div class="f" style="margin:0">
+        <label>Drug Name</label>
+        <input type="text" id="m_name" placeholder="e.g. Metoprolol tartrate">
+      </div>
+      <div class="f" style="margin:0">
+        <label>Category / Drug Class</label>
+        <input type="text" id="m_cat" placeholder="e.g. Beta-blocker">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px">
+      <div class="f" style="margin:0">
+        <label>Dose &amp; Route</label>
+        <input type="text" id="m_dose" placeholder="e.g. 25mg PO">
+      </div>
+      <div class="f" style="margin:0">
+        <label>Frequency</label>
+        <select id="m_freq" onchange="autoTimes()">
+          <option value="OD">OD — Once daily</option>
+          <option value="BID">BID — Twice daily</option>
+          <option value="TID">TID — Three times</option>
+          <option value="QID">QID — Four times</option>
+          <option value="q4h">q4h (6×/day)</option>
+          <option value="q6h">q6h (4×/day)</option>
+          <option value="q8h">q8h (3×/day)</option>
+          <option value="STAT">STAT — Immediately</option>
+          <option value="HS">HS — Bedtime</option>
+          <option value="PRN">PRN — As needed</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </div>
+      <div class="f" style="margin:0">
+        <label>Scheduled Times</label>
+        <input type="text" id="m_times" placeholder="e.g. 06:00, 18:00">
+      </div>
+      <button class="btn btn-teal btn-sm" onclick="addMed()" style="height:32px;align-self:end">+ Order</button>
+    </div>
+
+    <div class="f">
+      <label>Special Instructions</label>
+      <input type="text" id="m_notes"
+             placeholder="e.g. Give with food; hold if HR &lt; 60; monitor renal function...">
+    </div>
+
+  </div>
+</div>

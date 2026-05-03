@@ -1,0 +1,92 @@
+<!-- ════════════════════════════════════════
+     panel-flowsheets.html
+     Flowsheets — Vital Signs & Head-to-Toe Assessment
+     ════════════════════════════════════════ -->
+<div class="panel" id="panel-flowsheets">
+
+  <!-- Vital Signs -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-hd">
+      <span class="card-title">Vital Signs</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="time" id="vTime" style="width:105px;font-size:11px;padding:5px 8px">
+        <button class="btn btn-sm" onclick="logVitals()">Log Entry</button>
+      </div>
+    </div>
+
+    <div class="g3" style="margin-bottom:12px">
+      <div class="v-box">
+        <div class="v-lbl">Heart Rate</div>
+        <input class="v-in" id="v_hr" type="number" placeholder="—" min="0" max="300" oninput="evalVitals()">
+        <div class="v-unit">bpm</div>
+        <div class="v-st" id="vs_hr"></div>
+      </div>
+      <div class="v-box">
+        <div class="v-lbl">Blood Pressure</div>
+        <input class="v-in" id="v_bp" type="text" placeholder="—/—" style="font-size:19px" oninput="evalVitals()">
+        <div class="v-unit">mmHg</div>
+        <div class="v-st" id="vs_bp"></div>
+      </div>
+      <div class="v-box">
+        <div class="v-lbl">SpO₂</div>
+        <input class="v-in" id="v_spo2" type="number" placeholder="—" min="0" max="100" oninput="evalVitals()">
+        <div class="v-unit">%</div>
+        <div class="v-st" id="vs_spo2"></div>
+      </div>
+      <div class="v-box">
+        <div class="v-lbl">Temperature</div>
+        <input class="v-in" id="v_temp" type="number" placeholder="—" step="0.1" oninput="evalVitals()">
+        <div class="v-unit">°C</div>
+        <div class="v-st" id="vs_temp"></div>
+      </div>
+      <div class="v-box">
+        <div class="v-lbl">Resp. Rate</div>
+        <input class="v-in" id="v_rr" type="number" placeholder="—" min="0" max="60" oninput="evalVitals()">
+        <div class="v-unit">breaths/min</div>
+        <div class="v-st" id="vs_rr"></div>
+      </div>
+      <div class="v-box">
+        <div class="v-lbl">Pain Scale</div>
+        <input class="v-in" id="v_pain" type="number" placeholder="—" min="0" max="10" oninput="evalVitals()">
+        <div class="v-unit">/ 10 NRS</div>
+        <div class="v-st" id="vs_pain"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <input type="text" id="vNote" placeholder="Optional note for this vital sign entry..."
+             style="flex:1;font-size:12px">
+    </div>
+
+    <div id="vlogWrap" style="display:none">
+      <div class="divider">Vital Sign Log</div>
+      <table class="vlt">
+        <thead>
+          <tr>
+            <th>Time</th><th>HR</th><th>BP</th><th>SpO₂</th>
+            <th>Temp</th><th>RR</th><th>Pain</th><th>Note</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="vlogBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Head-to-Toe Assessment -->
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Head-to-Toe Assessment</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="time" id="assessTime" style="width:105px;font-size:11px;padding:5px 8px">
+        <span style="font-size:11px;color:var(--muted)">Assessment time</span>
+      </div>
+    </div>
+    <div id="httRows"></div>
+    <div class="f" style="margin-top:12px">
+      <label>General Clinical Impression / Notes</label>
+      <textarea id="assessNotes"
+                placeholder="Overall appearance, level of consciousness, behavior, cooperation, and general impression..."></textarea>
+    </div>
+  </div>
+
+</div>

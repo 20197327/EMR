@@ -1,0 +1,47 @@
+{
+  "name": "NurseChart EMR",
+  "short_name": "NurseChart",
+  "description": "Electronic Medical Records for nursing professionals",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a2d3d",
+  "theme_color": "#0a2d3d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "medical",
+    "health",
+    "productivity"
+  ],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "./",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Vitals",
+      "short_name": "Vitals",
+      "url": "./index.html?panel=flowsheets",
+      "description": "Log vital signs"
+    },
+    {
+      "name": "Nurse's Notes",
+      "short_name": "Notes",
+      "url": "./index.html?panel=nursenotes",
+      "description": "Add a nurse note"
+    }
+  ]
+}

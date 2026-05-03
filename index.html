@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>NurseChart EMR</title>
+
+  <!-- ══ PWA: Web App Manifest ══ -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- ══ PWA: iOS / Safari meta tags ══ -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NurseChart">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- ══ PWA: Android / Chrome meta tags ══ -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a2d3d">
+  <meta name="application-name" content="NurseChart">
+
+  <!-- ══ General SEO / sharing ══ -->
+  <meta name="description" content="NurseChart — Electronic Medical Records for nursing professionals">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- ══ Fonts ══ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- ══ Styles ══ -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="shell">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <div class="sidebar">
+
+    <!-- Logo -->
+    <div class="s-logo">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 3v14M3 10h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- Patient Dashboard -->
+    <button class="s-btn on" data-panel="dashboard" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="3"  y="3"  width="6" height="6" rx="1.5" fill="currentColor"/>
+        <rect x="11" y="3"  width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+        <rect x="3"  y="11" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+        <rect x="11" y="11" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+      </svg>
+      <span class="s-tip">Patient Dashboard</span>
+    </button>
+
+    <!-- Flowsheets -->
+    <button class="s-btn" data-panel="flowsheets" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M3 14l4-5 3 3 4-6 3 3" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="s-tip">Flowsheets</span>
+    </button>
+
+    <!-- MAR -->
+    <button class="s-btn" data-panel="mar" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="5" y="3" width="10" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M8 7h4M8 10h4M8 13h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span class="s-tip">MAR</span>
+    </button>
+
+    <!-- Nursing Care Plan -->
+    <button class="s-btn" data-panel="careplan" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 17s-7-4.5-7-9a5 5 0 0110 0 5 5 0 0110 0c0 4.5-7 9-7 9z"
+              stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      <span class="s-tip">Nursing Care Plan</span>
+    </button>
+
+    <!-- Nurse's Notes -->
+    <button class="s-btn" data-panel="nursenotes" onclick="nav(this)">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M5 3h10a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"
+              stroke="currentColor" stroke-width="1.5"/>
+        <path d="M7 7h6M7 10h6M7 13h4"
+              stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="15" cy="15" r="3.5" fill="currentColor" opacity=".9"/>
+        <path d="M14 15h2M15 14v2" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span class="s-tip">Nurse's Notes</span>
+    </button>
+
+    <!-- Separator + utility buttons -->
+    <div class="s-sep" style="margin-top:auto"></div>
+
+    <button class="s-btn" onclick="window.print()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="4" y="7" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M7 7V4h6v3M7 13h6M7 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span class="s-tip">Print Record</span>
+    </button>
+
+    <button class="s-btn" onclick="clearRecord()">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="s-tip">Clear Record</span>
+    </button>
+
+  </div><!-- /sidebar -->
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="pt-av" id="topAv">?</div>
+      <div style="flex:1;min-width:0">
+        <div class="pt-name" id="topName">New Patient</div>
+        <div class="pt-meta" id="topMeta">Complete the Patient Dashboard to begin</div>
+      </div>
+      <div class="tb-right">
+        <div class="saved" id="savedLbl">
+          <div class="saved-dot"></div>Saved
+        </div>
+        <button class="btn btn-teal" onclick="saveAll()">Save Record</button>
+      </div>
+    </div>
+
+    <!-- Scrollable content area — all panels live here -->
+    <div class="content">
+
+      <!-- ── Panel: Patient Dashboard ── -->
+      <!-- (contents defined in panel-dashboard.html) -->
+      <div class="panel on" id="panel-dashboard">
+        <div class="g2">
+
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-title">Demographics</span>
+              <span class="badge b-blu" id="statusBadge">New Record</span>
+            </div>
+            <div class="f"><label>Full Name</label><input type="text" id="d_name" placeholder="Last, First Middle" oninput="refreshTopbar()"></div>
+            <div class="g2" style="margin-bottom:10px">
+              <div class="f" style="margin:0"><label>Date of Birth</label><input type="date" id="d_dob" oninput="refreshTopbar()"></div>
+              <div class="f" style="margin:0"><label>Sex</label><select id="d_sex"><option value="">—</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Other</option></select></div>
+            </div>
+            <div class="g2" style="margin-bottom:10px">
+              <div class="f" style="margin:0"><label>Blood Type</label><select id="d_blood"><option value="">—</option><option>A+</option><option>A−</option><option>B+</option><option>B−</option><option>O+</option><option>O−</option><option>AB+</option><option>AB−</option><option>Unknown</option></select></div>
+              <div class="f" style="margin:0"><label>Weight (kg)</label><input type="number" id="d_weight" placeholder="kg" min="0" max="500"></div>
+              <div class="f" style="margin:0"><label>Height (cm)</label><input type="number" id="d_height" placeholder="cm" min="0" max="500"></div>
+            </div>
+            <div class="g2" style="margin-bottom:10px">
+              <div class="f" style="margin:0"><label>MRN</label><input type="text" id="d_mrn" placeholder="Auto-generated" oninput="refreshTopbar()"></div>
+              <div class="f" style="margin:0"><label>Room / Bed</label><input type="text" id="d_room" placeholder="e.g. 302-A" oninput="refreshTopbar()"></div>
+            </div>
+            <div class="g2" style="margin-bottom:10px">
+              <div class="f" style="margin:0"><label>Attending Physician</label><input type="text" id="d_doctor" placeholder="Dr. ..." oninput="refreshTopbar()"></div>
+              <div class="f" style="margin:0"><label>Admission Date</label><input type="date" id="d_admit"></div>
+            </div>
+            <div class="f"><label>Emergency Contact</label><input type="text" id="d_contact" placeholder="Name (Relationship) — Phone number"></div>
+            <div class="f"><label>Admission Status</label>
+              <select id="d_status" onchange="refreshTopbar()"><option value="">— Select —</option><option>Admitted</option><option>Observation</option><option>Emergency</option><option>Outpatient</option><option>Discharged</option></select>
+            </div>
+            <div class="f"><label>Primary Diagnosis / Reason for Admission</label><textarea id="d_diag" placeholder="Primary diagnosis or reason for this admission..."></textarea></div>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Allergies &amp; Intolerances</span><span class="badge b-red" id="allergyCount">0 alerts</span></div>
+            <div class="fl">Allergies</div>
+            <div class="tag-list" id="allergyList" style="margin-bottom:4px"></div>
+            <div class="tag-row"><input type="text" id="allergyIn" placeholder="Drug / substance — reaction type" onkeydown="if(event.key==='Enter')addTag('a')"><button class="btn btn-sm" onclick="addTag('a')">+ Add</button></div>
+            <div class="divider" style="margin-top:14px">Intolerances</div>
+            <div class="tag-list" id="intoleranceList" style="margin-bottom:4px"></div>
+            <div class="tag-row"><input type="text" id="intoleranceIn" placeholder="Food / substance — reaction" onkeydown="if(event.key==='Enter')addTag('i')"><button class="btn btn-sm" onclick="addTag('i')">+ Add</button></div>
+            <div class="divider">Code Status</div>
+            <div class="f"><select id="d_code"><option value="">— Select code status —</option><option>Full Code</option><option>DNR — Do Not Resuscitate</option><option>DNI — Do Not Intubate</option><option>DNR/DNI</option><option>Comfort Care Only</option></select></div>
+            <div class="f"><label>Code Status Notes</label><textarea id="d_codeNotes" placeholder="Advance directives, legal documents on file, family discussions..."></textarea></div>
+            <div class="divider">Chief Complaints</div>
+            <div id="complaintList"></div>
+            <div style="display:grid;grid-template-columns:1fr 80px 100px auto;gap:7px;align-items:end;margin-top:8px">
+              <div class="f" style="margin:0"><label>Complaint / Problem</label><input type="text" id="cIn" placeholder="Describe the complaint..." onkeydown="if(event.key==='Enter')addComplaint()"></div>
+              <div class="f" style="margin:0"><label>NRS Pain</label><input type="number" id="cPain" min="0" max="10" placeholder="0–10"></div>
+              <div class="f" style="margin:0"><label>Priority</label><select id="cPri"><option value="priority">Priority</option><option value="monitor">Monitor</option><option value="chronic">Chronic</option><option value="resolved">Resolved</option></select></div>
+              <button class="btn btn-sm btn-teal" onclick="addComplaint()" style="height:32px;align-self:end">+ Add</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <!-- /panel-dashboard -->
+
+      <!-- ── Panel: Flowsheets ── -->
+      <!-- (contents defined in panel-flowsheets.html) -->
+      <div class="panel" id="panel-flowsheets">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-hd">
+            <span class="card-title">Vital Signs</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="time" id="vTime" style="width:105px;font-size:11px;padding:5px 8px">
+              <button class="btn btn-sm" onclick="logVitals()">Log Entry</button>
+            </div>
+          </div>
+          <div class="g3" style="margin-bottom:12px">
+            <div class="v-box"><div class="v-lbl">Heart Rate</div><input class="v-in" id="v_hr" type="number" placeholder="—" min="0" max="300" oninput="evalVitals()"><div class="v-unit">bpm</div><div class="v-st" id="vs_hr"></div></div>
+            <div class="v-box"><div class="v-lbl">Blood Pressure</div><input class="v-in" id="v_bp" type="text" placeholder="—/—" style="font-size:19px" oninput="evalVitals()"><div class="v-unit">mmHg</div><div class="v-st" id="vs_bp"></div></div>
+            <div class="v-box"><div class="v-lbl">SpO₂</div><input class="v-in" id="v_spo2" type="number" placeholder="—" min="0" max="100" oninput="evalVitals()"><div class="v-unit">%</div><div class="v-st" id="vs_spo2"></div></div>
+            <div class="v-box"><div class="v-lbl">Temperature</div><input class="v-in" id="v_temp" type="number" placeholder="—" step="0.1" oninput="evalVitals()"><div class="v-unit">°C</div><div class="v-st" id="vs_temp"></div></div>
+            <div class="v-box"><div class="v-lbl">Resp. Rate</div><input class="v-in" id="v_rr" type="number" placeholder="—" min="0" max="60" oninput="evalVitals()"><div class="v-unit">breaths/min</div><div class="v-st" id="vs_rr"></div></div>
+            <div class="v-box"><div class="v-lbl">Pain Scale</div><input class="v-in" id="v_pain" type="number" placeholder="—" min="0" max="10" oninput="evalVitals()"><div class="v-unit">/ 10 NRS</div><div class="v-st" id="vs_pain"></div></div>
+          </div>
+          <div style="display:flex;gap:8px"><input type="text" id="vNote" placeholder="Optional note for this vital sign entry..." style="flex:1;font-size:12px"></div>
+          <div id="vlogWrap" style="display:none">
+            <div class="divider">Vital Sign Log</div>
+            <table class="vlt"><thead><tr><th>Time</th><th>HR</th><th>BP</th><th>SpO₂</th><th>Temp</th><th>RR</th><th>Pain</th><th>Note</th><th></th></tr></thead><tbody id="vlogBody"></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">Head-to-Toe Assessment</span>
+            <div style="display:flex;gap:8px;align-items:center"><input type="time" id="assessTime" style="width:105px;font-size:11px;padding:5px 8px"><span style="font-size:11px;color:var(--muted)">Assessment time</span></div>
+          </div>
+          <div id="httRows"></div>
+          <div class="f" style="margin-top:12px"><label>General Clinical Impression / Notes</label><textarea id="assessNotes" placeholder="Overall appearance, level of consciousness, behavior, cooperation, and general impression..."></textarea></div>
+        </div>
+      </div>
+      <!-- /panel-flowsheets -->
+
+      <!-- ── Panel: MAR ── -->
+      <!-- (contents defined in panel-mar.html) -->
+      <div class="panel" id="panel-mar">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Medication Administration Record</span><span class="badge b-blu" id="marDate"></span></div>
+          <table class="mart" id="marTbl" style="display:none">
+            <thead><tr><th>Medication</th><th>Dose / Route</th><th>Frequency</th><th>Admin. Times</th><th></th></tr></thead>
+            <tbody id="marBody"></tbody>
+          </table>
+          <div id="marEmpty" class="empty" style="padding:28px">
+            <svg viewBox="0 0 20 20" fill="none"><rect x="5" y="3" width="10" height="14" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M8 7h4M8 10h4M8 13h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <p>No medication orders yet.<br>Use the form below to add an order.</p>
+          </div>
+          <div class="divider">Add Medication Order</div>
+          <div class="g2" style="margin-bottom:10px">
+            <div class="f" style="margin:0"><label>Drug Name</label><input type="text" id="m_name" placeholder="e.g. Metoprolol tartrate"></div>
+            <div class="f" style="margin:0"><label>Category / Drug Class</label><input type="text" id="m_cat" placeholder="e.g. Beta-blocker"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px">
+            <div class="f" style="margin:0"><label>Dose &amp; Route</label><input type="text" id="m_dose" placeholder="e.g. 25mg PO"></div>
+            <div class="f" style="margin:0"><label>Frequency</label>
+              <select id="m_freq" onchange="autoTimes()">
+                <option value="OD">OD — Once daily</option><option value="BID">BID — Twice daily</option><option value="TID">TID — Three times</option>
+                <option value="QID">QID — Four times</option><option value="q4h">q4h (6×/day)</option><option value="q6h">q6h (4×/day)</option>
+                <option value="q8h">q8h (3×/day)</option><option value="STAT">STAT — Immediately</option>
+                <option value="HS">HS — Bedtime</option><option value="PRN">PRN — As needed</option><option value="Custom">Custom</option>
+              </select>
+            </div>
+            <div class="f" style="margin:0"><label>Scheduled Times</label><input type="text" id="m_times" placeholder="e.g. 06:00, 18:00"></div>
+            <button class="btn btn-teal btn-sm" onclick="addMed()" style="height:32px;align-self:end">+ Order</button>
+          </div>
+          <div class="f"><label>Special Instructions</label><input type="text" id="m_notes" placeholder="e.g. Give with food; hold if HR &lt; 60; monitor renal function..."></div>
+        </div>
+      </div>
+      <!-- /panel-mar -->
+
+      <!-- ── Panel: Nursing Care Plan ── -->
+      <!-- (contents defined in panel-careplan.html) -->
+      <div class="panel" id="panel-careplan">
+        <div class="card">
+          <div class="card-hd">
+            <span class="card-title">Nursing Care Plan</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm" onclick="openTplModal()">+ From Template</button>
+              <button class="btn btn-sm btn-teal" onclick="addNcpBlank()">+ Custom Diagnosis</button>
+            </div>
+          </div>
+          <div id="ncpList"></div>
+          <div id="ncpEmpty" class="empty">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M10 17s-7-4.5-7-9a5 5 0 0110 0 5 5 0 0110 0c0 4.5-7 9-7 9z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <p>No nursing diagnoses yet.<br>Add a template or create a custom diagnosis above.</p>
+          </div>
+        </div>
+      </div>
+      <!-- /panel-careplan -->
+
+      <!-- ── Panel: Nurse's Notes ── -->
+      <!-- (contents defined in panel-nursenotes.html) -->
+      <div class="panel" id="panel-nursenotes">
+        <div class="card">
+
+          <div class="card-hd">
+            <span class="card-title">Nurse's Notes</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge b-pur" style="font-size:10px">FDAR Format</span>
+              <button class="btn btn-sm btn-teal" onclick="addNurseNote()">+ New Note</button>
+            </div>
+          </div>
+
+          <!-- FDAR legend -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;background:var(--inp);border-radius:8px;border:.5px solid var(--border)">
+            <span style="font-size:11px;color:var(--muted);font-weight:600;align-self:center">FDAR:&nbsp;</span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px">
+              <span style="width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--blu-bg);color:var(--blu)">F</span>
+              <strong>Focus</strong> — the nursing concern or problem
+            </span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px">
+              <span style="width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--grn-bg);color:var(--grn)">D</span>
+              <strong>Data</strong> — objective &amp; subjective findings
+            </span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px">
+              <span style="width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--ora-bg);color:var(--ora)">A</span>
+              <strong>Action</strong> — interventions performed
+            </span>
+            <span style="font-size:11px;display:flex;align-items:center;gap:5px">
+              <span style="width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--pur-bg);color:var(--pur)">R</span>
+              <strong>Response</strong> — patient's outcome
+            </span>
+          </div>
+
+          <div id="nnList"></div>
+
+          <div id="nnEmpty" class="empty">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path d="M5 3h10a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            <p>No nurse's notes yet.<br>Click <strong>+ New Note</strong> to add a FDAR entry.</p>
+          </div>
+
+        </div>
+      </div>
+      <!-- /panel-nursenotes -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ══════════════ MOBILE BOTTOM NAV ══════════════ -->
+<nav class="mobile-nav" aria-label="Main navigation">
+  <div class="mobile-nav-inner">
+
+    <button class="mob-btn on" data-panel="dashboard" onclick="navMob(this)" aria-label="Patient Dashboard">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="3"  y="3"  width="6" height="6" rx="1.5" fill="currentColor"/>
+        <rect x="11" y="3"  width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+        <rect x="3"  y="11" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+        <rect x="11" y="11" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/>
+      </svg>
+      <span>Dashboard</span>
+    </button>
+
+    <button class="mob-btn" data-panel="flowsheets" onclick="navMob(this)" aria-label="Flowsheets">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M3 14l4-5 3 3 4-6 3 3" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Vitals</span>
+    </button>
+
+    <button class="mob-btn" data-panel="mar" onclick="navMob(this)" aria-label="MAR">
+      <svg viewBox="0 0 20 20" fill="none">
+        <rect x="5" y="3" width="10" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M8 7h4M8 10h4M8 13h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span>MAR</span>
+    </button>
+
+    <button class="mob-btn" data-panel="careplan" onclick="navMob(this)" aria-label="Nursing Care Plan">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 17s-7-4.5-7-9a5 5 0 0110 0 5 5 0 0110 0c0 4.5-7 9-7 9z"
+              stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      <span>Care Plan</span>
+    </button>
+
+    <button class="mob-btn" data-panel="nursenotes" onclick="navMob(this)" aria-label="Nurse's Notes">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M5 3h10a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z"
+              stroke="currentColor" stroke-width="1.5"/>
+        <path d="M7 7h6M7 10h6M7 13h4"
+              stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="15" cy="15" r="3.5" fill="currentColor" opacity=".9"/>
+        <path d="M14 15h2M15 14v2" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span>Notes</span>
+    </button>
+
+  </div>
+</nav>
+
+<!-- ══ MAR MODAL ══ -->
+<div class="modal-bg" id="marModal">
+  <div class="modal">
+    <div class="modal-title">Confirm Administration</div>
+    <div class="modal-sub" id="marModalDrug">—</div>
+    <div class="f"><label>Administered By (RN)</label><input type="text" id="mr_nurse" placeholder="Full name and credentials"></div>
+    <div class="g2">
+      <div class="f"><label>Time Given</label><input type="time" id="mr_time"></div>
+      <div class="f"><label>Route</label><input type="text" id="mr_route" placeholder="e.g. PO, IV, SC"></div>
+    </div>
+    <div class="f"><label>Notes / Reason if Held</label><textarea id="mr_notes" placeholder="Patient response, injection site, reason for hold or refusal..."></textarea></div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="marAction('held')">⊘ Hold / Refuse</button>
+      <button class="btn btn-teal"   onclick="marAction('given')">✓ Confirm Given</button>
+    </div>
+    <button class="btn btn-ghost" onclick="closeMar()" style="width:100%;margin-top:8px;text-align:center">Cancel</button>
+  </div>
+</div>
+
+<!-- ══ NCP TEMPLATE MODAL ══ -->
+<div class="modal-bg" id="ncpModal">
+  <div class="modal" style="width:460px;max-height:85vh">
+    <div class="modal-title">Select Nursing Diagnosis Template</div>
+    <div class="modal-sub">NANDA-based — all fields are editable after adding</div>
+    <div id="tplList" style="overflow-y:auto;max-height:500px;padding-right:4px"></div>
+    <button class="btn btn-ghost" onclick="closeNcpModal()" style="width:100%;margin-top:10px;text-align:center">Cancel</button>
+  </div>
+</div>
+
+<!-- ══ PWA INSTALL BANNER ══ -->
+<!-- Shown on Android/Chrome when the app is installable -->
+<div id="installBanner" style="
+  display:none; position:fixed; bottom:calc(70px + env(safe-area-inset-bottom));
+  left:12px; right:12px; z-index:10000;
+  background:var(--navy); color:#fff;
+  border-radius:13px; padding:14px 16px;
+  align-items:center; gap:12px;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);
+  border:.5px solid rgba(255,255,255,.12);
+">
+  <div style="width:38px;height:38px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M3 10h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+  </div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:13px;font-weight:600;margin-bottom:2px">Install NurseChart</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.65)">Add to Home Screen for offline access</div>
+  </div>
+  <button onclick="installApp()" style="background:var(--teal);color:#fff;border:none;border-radius:7px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif">Install</button>
+  <button onclick="dismissInstall()" style="background:transparent;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:0 2px;line-height:1">×</button>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+
+<script>
+/* ══ Service Worker Registration ══ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('NurseChart SW registered:', reg.scope);
+    }).catch(function(err) {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
+
+/* ══ Deep-link via ?panel=xxx query param (used by PWA shortcuts) ══ */
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var p = params.get('panel');
+  if (p) {
+    var btn = document.querySelector('.s-btn[data-panel="' + p + '"]');
+    var mobBtn = document.querySelector('.mob-btn[data-panel="' + p + '"]');
+    if (btn) nav(btn);
+    else if (mobBtn) navMob(mobBtn);
+  }
+})();
+
+/* ══ PWA Install prompt ══ */
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show a subtle install banner after 3 seconds if not already installed
+  setTimeout(showInstallBanner, 3000);
+});
+
+function showInstallBanner() {
+  if (!deferredPrompt) return;
+  // Don't show if already running as standalone (installed)
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'flex';
+}
+
+function installApp() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(choice) {
+    if (choice.outcome === 'accepted') toast('NurseChart installed ✓');
+    deferredPrompt = null;
+  });
+}
+
+function dismissInstall() {
+  var banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  deferredPrompt = null;
+}
+</script>
+</body>
+</html>
