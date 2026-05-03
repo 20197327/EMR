@@ -3,30 +3,42 @@
    ═══════════════════════════════════════════════ */
 'use strict';
 
+/* ═══════════════ BLANK RECORD FACTORY ═══════════════ */
+function blankRecord(id) {
+  return {
+    _id:   id || ('pt_' + Date.now() + '_' + Math.floor(Math.random()*9999)),
+    _savedAt: null,
+    demo:    { name:'',dob:'',sex:'',blood:'',weight:'',height:'',mrn:'',room:'',doctor:'',admit:'',contact:'',status:'',diag:'',code:'',codeNotes:'' },
+    allergies:    [],
+    intolerances: [],
+    complaints:   [],
+    vitals:  { hr:'',bp:'',spo2:'',temp:'',rr:'',pain:'',time:'',note:'' },
+    vLog:    [],
+    htt: [
+      {sys:'Neurological',        finding:'', status:''},
+      {sys:'Cardiovascular',      finding:'', status:''},
+      {sys:'Respiratory',         finding:'', status:''},
+      {sys:'GI / Abdomen',        finding:'', status:''},
+      {sys:'Genitourinary',       finding:'', status:''},
+      {sys:'Integumentary / Skin',finding:'', status:''},
+      {sys:'Musculoskeletal',     finding:'', status:''},
+      {sys:'Pain',                finding:'', status:''},
+    ],
+    assessTime: '',
+    assessNotes: '',
+    meds:        [],
+    ncp:         [],
+    nurseNotes:  []
+  };
+}
+
 /* ═══════════════ STATE ═══════════════ */
-var S = {
-  demo:    { name:'',dob:'',sex:'',blood:'',weight:'',height:'',mrn:'',room:'',doctor:'',admit:'',contact:'',status:'',diag:'',code:'',codeNotes:'' },
-  allergies:    [],
-  intolerances: [],
-  complaints:   [],
-  vitals:  { hr:'',bp:'',spo2:'',temp:'',rr:'',pain:'',time:'',note:'' },
-  vLog:    [],
-  htt: [
-    {sys:'Neurological',        finding:'', status:''},
-    {sys:'Cardiovascular',      finding:'', status:''},
-    {sys:'Respiratory',         finding:'', status:''},
-    {sys:'GI / Abdomen',        finding:'', status:''},
-    {sys:'Genitourinary',       finding:'', status:''},
-    {sys:'Integumentary / Skin',finding:'', status:''},
-    {sys:'Musculoskeletal',     finding:'', status:''},
-    {sys:'Pain',                finding:'', status:''},
-  ],
-  assessTime: '',
-  assessNotes: '',
-  meds:   [],
-  ncp:    [],
-  nurseNotes: []   /* Array of FDAR note objects */
-};
+/* S = currently open record (one patient at a time) */
+var S = blankRecord();
+
+/* All saved patient records index stored in localStorage */
+/* Key: 'nchart_patients'  Value: array of record objects */
+var PATIENTS_KEY = 'nchart_patients';
 
 /* ═══════════════ NAVIGATION ═══════════════ */
 function nav(btn) {
@@ -34,11 +46,10 @@ function nav(btn) {
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
   btn.classList.add('on');
   document.getElementById('panel-' + btn.dataset.panel).classList.add('on');
-  /* Keep mobile nav in sync */
   syncMobNav(btn.dataset.panel);
+  if (btn.dataset.panel === 'patients') renderPatientsList();
 }
 
-/* Mobile bottom nav — mirrors desktop nav + scrolls to top */
 function navMob(btn) {
   var panel = btn.dataset.panel;
   document.querySelectorAll('.mob-btn').forEach(function(b) { b.classList.remove('on'); });
@@ -46,20 +57,45 @@ function navMob(btn) {
   btn.classList.add('on');
   document.getElementById('panel-' + panel).classList.add('on');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  /* Keep desktop sidebar in sync */
   document.querySelectorAll('.s-btn[data-panel]').forEach(function(b) {
     b.classList.toggle('on', b.dataset.panel === panel);
   });
+  if (panel === 'patients') renderPatientsList();
 }
 
-/* Sync mobile nav when desktop nav is used */
 function syncMobNav(panel) {
   document.querySelectorAll('.mob-btn').forEach(function(b) {
     b.classList.toggle('on', b.dataset.panel === panel);
   });
 }
 
-/* ═══════════════ SAVE / LOAD ═══════════════ */
+function switchPanel(panelName) {
+  document.querySelectorAll('.s-btn[data-panel]').forEach(function(b) {
+    b.classList.toggle('on', b.dataset.panel === panelName);
+  });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('on'); });
+  document.getElementById('panel-' + panelName).classList.add('on');
+  syncMobNav(panelName);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═══════════════ MULTI-PATIENT STORAGE ═══════════════ */
+function getAllPatients() {
+  try {
+    var raw = localStorage.getItem(PATIENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveAllPatients(patients) {
+  try { localStorage.setItem(PATIENTS_KEY, JSON.stringify(patients)); } catch(e) {}
+}
+
+function getPatientById(id) {
+  return getAllPatients().find(function(p) { return p._id === id; }) || null;
+}
+
+/* ═══════════════ SAVE / LOAD CURRENT RECORD ═══════════════ */
 function collectAll() {
   ['name','dob','sex','blood','weight','height','mrn','room','doctor','admit','contact','status','diag','code','codeNotes'].forEach(function(k) {
     var el = document.getElementById('d_' + k);
@@ -83,36 +119,80 @@ function collectAll() {
 
 function saveAll() {
   collectAll();
-  try { localStorage.setItem('nchart_v2', JSON.stringify(S)); } catch(e) {}
+  S._savedAt = new Date().toISOString();
+
+  /* Upsert into patients array */
+  var patients = getAllPatients();
+  var idx = patients.findIndex(function(p) { return p._id === S._id; });
+  if (idx >= 0) {
+    patients[idx] = S;
+  } else {
+    patients.unshift(S);
+  }
+  saveAllPatients(patients);
+
+  /* Also keep a quick-access "last open" pointer */
+  try { localStorage.setItem('nchart_last', S._id); } catch(e) {}
+
   showSaved();
   toast('Record saved');
+  renderPatientsBadge();
+}
+
+function loadRecordIntoUI(record) {
+  /* Deep-copy so edits don't mutate the store directly */
+  S = JSON.parse(JSON.stringify(record));
+
+  fillDemo(); fillVitals();
+  renderTags(); updateAllergyCount();
+  renderComplaints(); renderHTT(); renderVLog(); evalVitals();
+  renderMar(); renderNcp(); renderNurseNotes();
+  refreshTopbar();
 }
 
 function loadAll() {
-  var raw;
-  try { raw = localStorage.getItem('nchart_v2'); } catch(e) { return; }
-  if (!raw) return;
-  try {
-    var L = JSON.parse(raw);
-    if (L.demo)         Object.assign(S.demo, L.demo);
-    if (L.allergies)    S.allergies    = L.allergies;
-    if (L.intolerances) S.intolerances = L.intolerances;
-    if (L.complaints)   S.complaints   = L.complaints;
-    if (L.vitals)       Object.assign(S.vitals, L.vitals);
-    if (L.vLog)         S.vLog  = L.vLog;
-    if (L.htt)          S.htt   = L.htt;
-    if (L.assessTime  !== undefined) S.assessTime  = L.assessTime;
-    if (L.assessNotes !== undefined) S.assessNotes = L.assessNotes;
-    if (L.meds)         S.meds  = L.meds;
-    if (L.ncp)          S.ncp   = L.ncp;
-    if (L.nurseNotes)   S.nurseNotes = L.nurseNotes;
+  /* Try to restore the last-opened record */
+  var lastId;
+  try { lastId = localStorage.getItem('nchart_last'); } catch(e) {}
 
-    fillDemo(); fillVitals();
-    renderTags(); updateAllergyCount();
-    renderComplaints(); renderHTT(); renderVLog(); evalVitals();
-    renderMar(); renderNcp(); renderNurseNotes();
+  var patients = getAllPatients();
+
+  /* Migrate legacy single-record format (nchart_v2) if present */
+  try {
+    var legacy = localStorage.getItem('nchart_v2');
+    if (legacy) {
+      var L = JSON.parse(legacy);
+      if (L.demo) {
+        var migrated = blankRecord();
+        Object.assign(migrated, L);
+        migrated._id = migrated._id || ('pt_legacy_' + Date.now());
+        migrated._savedAt = new Date().toISOString();
+        /* Only migrate if not already in patients list */
+        var alreadyMigrated = patients.find(function(p) { return p._id === migrated._id; });
+        if (!alreadyMigrated) {
+          patients.unshift(migrated);
+          saveAllPatients(patients);
+        }
+        localStorage.removeItem('nchart_v2');
+        if (!lastId) lastId = migrated._id;
+      }
+    }
+  } catch(e) {}
+
+  if (patients.length === 0) {
+    /* Fresh install — just init defaults */
+    sv('d_mrn',   'MRN-' + Math.floor(Math.random() * 90000 + 10000));
+    sv('d_admit', new Date().toISOString().split('T')[0]);
     refreshTopbar();
-  } catch(e) { console.error(e); }
+    renderPatientsBadge();
+    return;
+  }
+
+  /* Load last-opened or most recent */
+  var toLoad = (lastId && patients.find(function(p) { return p._id === lastId; }))
+               || patients[0];
+  loadRecordIntoUI(toLoad);
+  renderPatientsBadge();
 }
 
 function fillDemo() {
@@ -127,16 +207,182 @@ function fillVitals() {
     var el = document.getElementById('v_' + k);
     if (el) el.value = S.vitals[k] || '';
   });
-  sv('vTime',     S.vitals.time);
-  sv('vNote',     S.vitals.note);
-  sv('assessTime',S.assessTime);
+  sv('vTime',      S.vitals.time);
+  sv('vNote',      S.vitals.note);
+  sv('assessTime', S.assessTime);
   sv('assessNotes',S.assessNotes);
 }
 
+/* New Patient — clear the form with a brand-new blank record */
+function newPatient() {
+  if (!confirm('Start a new patient record? Unsaved changes to the current record will be lost.')) return;
+  S = blankRecord();
+  S.demo.mrn   = 'MRN-' + Math.floor(Math.random() * 90000 + 10000);
+  S.demo.admit = new Date().toISOString().split('T')[0];
+  loadRecordIntoUI(S);
+  sv('vTime', nowTime());
+  sv('assessTime', nowTime());
+  switchPanel('dashboard');
+  toast('New patient record started');
+}
+
+/* Clear / delete current record */
 function clearRecord() {
-  if (!confirm('Clear all patient data? This cannot be undone.')) return;
-  try { localStorage.removeItem('nchart_v2'); } catch(e) {}
-  location.reload();
+  if (!confirm('Delete this patient record permanently? This cannot be undone.')) return;
+  var patients = getAllPatients();
+  patients = patients.filter(function(p) { return p._id !== S._id; });
+  saveAllPatients(patients);
+  try { localStorage.removeItem('nchart_last'); } catch(e) {}
+
+  /* Load next record or start fresh */
+  if (patients.length > 0) {
+    loadRecordIntoUI(patients[0]);
+    toast('Record deleted');
+  } else {
+    S = blankRecord();
+    S.demo.mrn   = 'MRN-' + Math.floor(Math.random() * 90000 + 10000);
+    S.demo.admit = new Date().toISOString().split('T')[0];
+    loadRecordIntoUI(S);
+    sv('vTime', nowTime());
+    sv('assessTime', nowTime());
+    toast('Record deleted');
+  }
+  renderPatientsBadge();
+  switchPanel('dashboard');
+}
+
+/* ═══════════════ PATIENTS LIST PANEL ═══════════════ */
+function renderPatientsBadge() {
+  var n = getAllPatients().length;
+  var badge    = document.getElementById('patientsBadge');
+  var badgeMob = document.getElementById('patientsBadgeMob');
+  [badge, badgeMob].forEach(function(b) {
+    if (!b) return;
+    b.textContent    = n;
+    b.style.display  = n > 0 ? 'flex' : 'none';
+  });
+}
+
+function renderPatientsList() {
+  var el    = document.getElementById('ptList');
+  var empty = document.getElementById('ptEmpty');
+  var search = (document.getElementById('ptSearch') || {value:''}).value.toLowerCase().trim();
+  if (!el) return;
+
+  var patients = getAllPatients();
+
+  /* Filter by search */
+  if (search) {
+    patients = patients.filter(function(p) {
+      var name = (p.demo && p.demo.name) ? p.demo.name.toLowerCase() : '';
+      var mrn  = (p.demo && p.demo.mrn)  ? p.demo.mrn.toLowerCase()  : '';
+      var room = (p.demo && p.demo.room) ? p.demo.room.toLowerCase() : '';
+      return name.includes(search) || mrn.includes(search) || room.includes(search);
+    });
+  }
+
+  if (patients.length === 0) {
+    el.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  var statusColors = {
+    Admitted:'b-grn', Emergency:'b-red', Discharged:'b-gry',
+    Observation:'b-blu', Outpatient:'b-blu'
+  };
+
+  el.innerHTML = patients.map(function(p) {
+    var d       = p.demo || {};
+    var name    = d.name  || 'Unnamed Patient';
+    var mrn     = d.mrn   || '—';
+    var room    = d.room  || '';
+    var doc     = d.doctor|| '';
+    var status  = d.status|| '';
+    var diag    = d.diag  || '';
+    var admit   = d.admit || '';
+    var isActive = (p._id === S._id);
+
+    /* Initials avatar */
+    var ini = name.replace(',','').trim().split(/\s+/).filter(Boolean)
+                  .map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase() || '?';
+
+    /* Age */
+    var ageStr = '';
+    if (d.dob) {
+      var age = Math.floor((Date.now() - new Date(d.dob)) / 31557600000);
+      if (age >= 0 && age < 150) ageStr = age + ' yrs';
+    }
+
+    /* Saved timestamp */
+    var savedStr = '';
+    if (p._savedAt) {
+      var dt = new Date(p._savedAt);
+      savedStr = dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+               + ' ' + dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    }
+
+    var meta = [mrn, room ? 'Rm ' + room : '', doc ? (doc.startsWith('Dr')?doc:'Dr. '+doc) : '', ageStr]
+               .filter(Boolean).join(' · ');
+
+    return '<div class="pt-card' + (isActive ? ' pt-card-active' : '') + '" onclick="openPatient(\'' + p._id + '\')">'
+      + '<div class="pt-card-av">' + esc(ini) + '</div>'
+      + '<div class="pt-card-body">'
+        + '<div class="pt-card-name">' + esc(name)
+          + (isActive ? '<span class="pt-active-chip">Editing</span>' : '')
+        + '</div>'
+        + (meta ? '<div class="pt-card-meta">' + esc(meta) + '</div>' : '')
+        + (diag ? '<div class="pt-card-diag">' + esc(diag.substring(0,80)) + (diag.length>80?'…':'') + '</div>' : '')
+        + (admit ? '<div class="pt-card-admit">Admitted: ' + esc(admit) + '</div>' : '')
+      + '</div>'
+      + '<div class="pt-card-right">'
+        + (status ? '<span class="badge ' + (statusColors[status]||'b-blu') + '" style="font-size:10px;margin-bottom:6px">' + esc(status) + '</span>' : '')
+        + (savedStr ? '<div class="pt-card-saved">' + esc(savedStr) + '</div>' : '')
+        + '<button class="pt-del-btn" onclick="event.stopPropagation();deletePatient(\'' + p._id + '\')" title="Delete record">🗑</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function openPatient(id) {
+  var record = getPatientById(id);
+  if (!record) { toast('Record not found'); return; }
+  /* Auto-save current unsaved changes first */
+  collectAll();
+  var patients = getAllPatients();
+  var idx = patients.findIndex(function(p) { return p._id === S._id; });
+  if (idx >= 0) { patients[idx] = S; saveAllPatients(patients); }
+
+  loadRecordIntoUI(record);
+  try { localStorage.setItem('nchart_last', id); } catch(e) {}
+  switchPanel('dashboard');
+  toast('Loaded: ' + (record.demo.name || 'Unnamed Patient'));
+}
+
+function deletePatient(id) {
+  var record = getPatientById(id);
+  var name = (record && record.demo && record.demo.name) ? record.demo.name : 'this patient';
+  if (!confirm('Delete record for ' + name + '? This cannot be undone.')) return;
+
+  var patients = getAllPatients().filter(function(p) { return p._id !== id; });
+  saveAllPatients(patients);
+
+  /* If we deleted the currently open record, load next or start fresh */
+  if (id === S._id) {
+    if (patients.length > 0) {
+      loadRecordIntoUI(patients[0]);
+    } else {
+      S = blankRecord();
+      S.demo.mrn   = 'MRN-' + Math.floor(Math.random() * 90000 + 10000);
+      S.demo.admit = new Date().toISOString().split('T')[0];
+      loadRecordIntoUI(S);
+    }
+  }
+
+  renderPatientsBadge();
+  renderPatientsList();
+  toast('Record deleted');
 }
 
 /* ═══════════════ TOPBAR ═══════════════ */
@@ -646,9 +892,7 @@ document.addEventListener('input', function() {
 
 /* ═══════════════ INIT ═══════════════ */
 (function() {
-  sv('d_mrn',   'MRN-' + Math.floor(Math.random() * 90000 + 10000));
-  sv('d_admit', new Date().toISOString().split('T')[0]);
-  sv('vTime',   nowTime());
+  sv('vTime',      nowTime());
   sv('assessTime', nowTime());
   document.getElementById('marDate').textContent =
     new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
