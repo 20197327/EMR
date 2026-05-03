@@ -461,6 +461,60 @@ select {
 }
 .toast.show { transform: translateY(0); opacity: 1; }
 
+/* ── PATIENT RECORDS LIST ── */
+.pt-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 14px;
+  border: .5px solid var(--border-m);
+  border-radius: 10px;
+  margin-bottom: 9px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+}
+.pt-card:hover        { border-color: var(--teal); box-shadow: 0 2px 12px rgba(14,159,117,.10); }
+.pt-card:active       { background: var(--grn-bg); }
+.pt-card-active       { border-color: var(--teal); background: var(--grn-bg); }
+.pt-card-av {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--blu-bg);
+  border: .5px solid var(--blu-b);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--blu);
+  font-family: 'IBM Plex Mono', monospace;
+  flex-shrink: 0;
+}
+.pt-card-active .pt-card-av {
+  background: var(--grn-bg);
+  border-color: var(--grn-b);
+  color: var(--grn);
+}
+.pt-card-body   { flex: 1; min-width: 0; }
+.pt-card-name   { font-size: 13px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.pt-card-meta   { font-size: 11px; color: var(--muted); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pt-card-diag   { font-size: 11px; color: var(--text); opacity: .75; margin-bottom: 2px; }
+.pt-card-admit  { font-size: 10px; color: var(--muted2); }
+.pt-card-right  { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.pt-card-saved  { font-size: 9px; color: var(--muted2); white-space: nowrap; text-align: right; }
+.pt-active-chip {
+  display: inline-flex; align-items: center;
+  padding: 1px 7px; border-radius: 99px;
+  background: var(--grn-bg); color: var(--grn);
+  border: .5px solid var(--grn-b);
+  font-size: 9px; font-weight: 600; letter-spacing: .04em;
+}
+.pt-del-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; padding: 2px 4px; border-radius: 5px;
+  opacity: .4; transition: opacity .15s;
+  line-height: 1;
+}
+.pt-del-btn:hover { opacity: 1; }
+
 /* ── PRINT ── */
 @media print {
   .sidebar, .mobile-nav, .tb-right, .add-btn, .btn, .rx, .tag-rm { display: none !important; }
