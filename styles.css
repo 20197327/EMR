@@ -499,48 +499,72 @@ select {
   display: none; /* hidden by default on desktop */
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 62px;
+  height: auto;                  /* let content determine height */
+  min-height: 60px;
   background: var(--navy);
   border-top: .5px solid rgba(255,255,255,.08);
   z-index: 200;
-  /* safe area for phones with home indicator */
-  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 20px rgba(0,0,0,.18);
 }
 .mobile-nav-inner {
   display: flex;
   align-items: stretch;
-  height: 100%;
+  width: 100%;
+  /* equal columns — every tab gets exactly the same width */
+  justify-content: space-around;
 }
 .mob-btn {
   flex: 1;
+  min-width: 0;           /* prevent any button from overflowing */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   border: none;
   background: transparent;
   color: #6ea8bf;
   cursor: pointer;
-  transition: all .15s;
-  padding: 6px 2px 4px;
+  transition: background .15s, color .15s;
+  padding: 8px 4px calc(6px + env(safe-area-inset-bottom));
+  position: relative;
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden;       /* clip anything that overflows the flex cell */
 }
 .mob-btn:active { background: rgba(255,255,255,.07); }
 .mob-btn.on     { color: #fff; }
-.mob-btn svg    { width: 20px; height: 20px; flex-shrink: 0; }
-.mob-btn span   { font-size: 9px; font-weight: 600; letter-spacing: .03em; font-family: 'IBM Plex Sans', sans-serif; line-height: 1; }
+/* Icon — fixed size, never shrinks */
+.mob-btn svg {
+  width: 22px; height: 22px;
+  flex-shrink: 0;
+  display: block;
+}
+/* Label — clipped, never wraps, centered */
+.mob-btn span {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  font-family: 'IBM Plex Sans', sans-serif;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
+  display: block;
+}
 .mob-btn.on span { color: var(--teal); }
-/* Active indicator dot */
+/* Active indicator dot — sits at very bottom of bar */
 .mob-btn.on::after {
   content: '';
   position: absolute;
-  bottom: calc(4px + env(safe-area-inset-bottom));
+  bottom: calc(3px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
   width: 4px; height: 4px;
   border-radius: 50%;
   background: var(--teal);
 }
-.mob-btn { position: relative; }
 
 /* ════════════════════════════════════════════
    TABLET — 769 to 1024px
@@ -566,7 +590,7 @@ select {
   body { font-size: 14px; overflow: auto; height: auto; min-height: 100vh; }
   .shell   { flex-direction: column; height: auto; min-height: 100vh; }
   .sidebar { display: none; }   /* replaced by .mobile-nav */
-  .main    { overflow: visible; padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
+  .main    { overflow: visible; padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
   .content { overflow: visible; padding: 12px 12px 20px; }
   .mobile-nav { display: flex; }
 
