@@ -94,6 +94,17 @@
       <span class="s-tip">Nurse's Notes</span>
     </button>
 
+    <!-- All Patients -->
+    <button class="s-btn" data-panel="patients" onclick="nav(this)" style="position:relative">
+      <svg viewBox="0 0 20 20" fill="none">
+        <circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M2 17c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M15 7v4M13 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span class="s-tip">All Patients</span>
+      <span id="patientsBadge" style="display:none;position:absolute;top:5px;right:5px;background:var(--teal);color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;"></span>
+    </button>
+
     <!-- Separator + utility buttons -->
     <div class="s-sep" style="margin-top:auto"></div>
 
@@ -107,9 +118,10 @@
 
     <button class="s-btn" onclick="clearRecord()">
       <svg viewBox="0 0 20 20" fill="none">
-        <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M6 4h8M5 4v12a1 1 0 001 1h8a1 1 0 001-1V4M8 4V3h4v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 8v5M12 8v5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
       </svg>
-      <span class="s-tip">Clear Record</span>
+      <span class="s-tip">Delete Record</span>
     </button>
 
   </div><!-- /sidebar -->
@@ -128,6 +140,7 @@
         <div class="saved" id="savedLbl">
           <div class="saved-dot"></div>Saved
         </div>
+        <button class="btn" onclick="newPatient()" style="font-size:11px">+ New Patient</button>
         <button class="btn btn-teal" onclick="saveAll()">Save Record</button>
       </div>
     </div>
@@ -335,6 +348,43 @@
       </div>
       <!-- /panel-nursenotes -->
 
+      <!-- ── Panel: All Patients ── -->
+      <div class="panel" id="panel-patients">
+        <div class="card">
+
+          <div class="card-hd">
+            <span class="card-title">All Patient Records</span>
+            <button class="btn btn-sm btn-teal" onclick="newPatient()">+ New Patient</button>
+          </div>
+
+          <!-- Search bar -->
+          <div style="margin-bottom:14px;position:relative">
+            <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted2)" viewBox="0 0 20 20" fill="none">
+              <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M13.5 13.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="ptSearch" placeholder="Search by name, MRN, or room…"
+                   style="padding-left:32px;font-size:13px"
+                   oninput="renderPatientsList()">
+          </div>
+
+          <!-- Patient cards list -->
+          <div id="ptList"></div>
+
+          <!-- Empty state -->
+          <div id="ptEmpty" class="empty" style="display:none">
+            <svg viewBox="0 0 20 20" fill="none">
+              <circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M2 17c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <path d="M15 7v4M13 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <p>No patient records saved yet.<br>Fill out the Dashboard and tap <strong>Save Record</strong>.</p>
+          </div>
+
+        </div>
+      </div>
+      <!-- /panel-patients -->
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /shell -->
@@ -387,6 +437,16 @@
         <path d="M14 15h2M15 14v2" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
       <span>Notes</span>
+    </button>
+
+    <button class="mob-btn" data-panel="patients" onclick="navMob(this)" aria-label="All Patients" style="position:relative">
+      <svg viewBox="0 0 20 20" fill="none">
+        <circle cx="8" cy="7" r="3" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M2 17c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M15 7v4M13 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span>Patients</span>
+      <span id="patientsBadgeMob" style="display:none;position:absolute;top:6px;right:calc(50% - 18px);background:var(--teal);color:#fff;font-size:8px;font-weight:700;width:14px;height:14px;border-radius:50%;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;line-height:14px;text-align:center;"></span>
     </button>
 
   </div>
