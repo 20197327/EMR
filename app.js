@@ -118,25 +118,35 @@ function collectAll() {
 }
 
 function saveAll() {
+  /* 1. Pull all form values into S */
   collectAll();
+
+  /* 2. Stamp timestamp */
   S._savedAt = new Date().toISOString();
 
-  /* Upsert into patients array */
+  /* 3. Upsert into the patients array */
   var patients = getAllPatients();
   var idx = patients.findIndex(function(p) { return p._id === S._id; });
   if (idx >= 0) {
-    patients[idx] = S;
+    patients[idx] = JSON.parse(JSON.stringify(S)); /* store a deep copy */
   } else {
-    patients.unshift(S);
+    patients.unshift(JSON.parse(JSON.stringify(S)));
   }
   saveAllPatients(patients);
 
-  /* Also keep a quick-access "last open" pointer */
+  /* 4. Remember which record is open */
   try { localStorage.setItem('nchart_last', S._id); } catch(e) {}
 
+  /* 5. UI feedback */
   showSaved();
   toast('Record saved');
   renderPatientsBadge();
+
+  /* 6. Refresh patients list if that panel is currently visible */
+  var ptPanel = document.getElementById('panel-patients');
+  if (ptPanel && ptPanel.classList.contains('on')) {
+    renderPatientsList();
+  }
 }
 
 function loadRecordIntoUI(record) {
@@ -151,44 +161,48 @@ function loadRecordIntoUI(record) {
 }
 
 function loadAll() {
-  /* Try to restore the last-opened record */
   var lastId;
   try { lastId = localStorage.getItem('nchart_last'); } catch(e) {}
 
   var patients = getAllPatients();
 
-  /* Migrate legacy single-record format (nchart_v2) if present */
+  /* ── Migrate legacy single-record (nchart_v2) ── */
   try {
     var legacy = localStorage.getItem('nchart_v2');
     if (legacy) {
       var L = JSON.parse(legacy);
-      if (L.demo) {
-        var migrated = blankRecord();
-        Object.assign(migrated, L);
-        migrated._id = migrated._id || ('pt_legacy_' + Date.now());
+      if (L && L.demo) {
+        var migrated      = blankRecord();
+        migrated._id      = 'pt_legacy_' + Date.now();
         migrated._savedAt = new Date().toISOString();
-        /* Only migrate if not already in patients list */
-        var alreadyMigrated = patients.find(function(p) { return p._id === migrated._id; });
-        if (!alreadyMigrated) {
-          patients.unshift(migrated);
-          saveAllPatients(patients);
-        }
+        /* Copy known keys */
+        ['demo','allergies','intolerances','complaints','vitals','vLog',
+         'htt','assessTime','assessNotes','meds','ncp','nurseNotes'].forEach(function(k) {
+          if (L[k] !== undefined) migrated[k] = L[k];
+        });
+        patients.unshift(migrated);
+        saveAllPatients(patients);
         localStorage.removeItem('nchart_v2');
         if (!lastId) lastId = migrated._id;
       }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Legacy migration failed:', e); }
 
+  /* ── No saved records at all — set up a clean blank record ── */
   if (patients.length === 0) {
-    /* Fresh install — just init defaults */
-    sv('d_mrn',   'MRN-' + Math.floor(Math.random() * 90000 + 10000));
-    sv('d_admit', new Date().toISOString().split('T')[0]);
+    S = blankRecord();
+    /* Push defaults into DOM so collectAll() picks them up on first save */
+    S.demo.mrn   = 'MRN-' + Math.floor(Math.random() * 90000 + 10000);
+    S.demo.admit = new Date().toISOString().split('T')[0];
+    fillDemo();
+    sv('vTime',      nowTime());
+    sv('assessTime', nowTime());
     refreshTopbar();
     renderPatientsBadge();
     return;
   }
 
-  /* Load last-opened or most recent */
+  /* ── Load last-opened or most recent ── */
   var toLoad = (lastId && patients.find(function(p) { return p._id === lastId; }))
                || patients[0];
   loadRecordIntoUI(toLoad);
@@ -219,8 +233,10 @@ function newPatient() {
   S = blankRecord();
   S.demo.mrn   = 'MRN-' + Math.floor(Math.random() * 90000 + 10000);
   S.demo.admit = new Date().toISOString().split('T')[0];
+  /* Use loadRecordIntoUI so all panels are cleared cleanly */
   loadRecordIntoUI(S);
-  sv('vTime', nowTime());
+  /* Override time fields after load */
+  sv('vTime',      nowTime());
   sv('assessTime', nowTime());
   switchPanel('dashboard');
   toast('New patient record started');
@@ -892,12 +908,23 @@ document.addEventListener('input', function() {
 
 /* ═══════════════ INIT ═══════════════ */
 (function() {
+  /* Set time fields to now as a default; loadAll may override */
   sv('vTime',      nowTime());
   sv('assessTime', nowTime());
+
   document.getElementById('marDate').textContent =
     new Date().toLocaleDateString('en-US', {day:'numeric', month:'short', year:'numeric'});
+
   autoTimes();
-  renderHTT(); renderComplaints(); renderMar(); renderNcp(); renderNurseNotes();
+
+  /* Render all dynamic panels with empty state first */
+  renderHTT();
+  renderComplaints();
+  renderMar();
+  renderNcp();
+  renderNurseNotes();
   refreshTopbar();
+
+  /* Load saved data — this will populate everything if records exist */
   loadAll();
 })();
