@@ -1,12 +1,11 @@
 /*
- * NurseChart EMR — Service Worker
- * Enables offline use, app installation, and fast load times.
- * Strategy: Cache-first for app shell assets, network-first for everything else.
+ * NurseChart EMR — Service Worker v3
+ * Strategy: Network-first for app files (always get latest),
+ * cache as fallback for offline use.
  */
 
-const CACHE_NAME = 'nursechart-v1';
+const CACHE_NAME = 'nursechart-v3';
 
-// All files that make up the app shell — cached on install
 const APP_SHELL = [
   './index.html',
   './styles.css',
@@ -14,39 +13,39 @@ const APP_SHELL = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  // Google Fonts — cached when first fetched
 ];
 
-/* ── INSTALL: pre-cache the app shell ── */
+/* ── INSTALL: pre-cache app shell ── */
 self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(APP_SHELL);
     }).then(function() {
-      // Take control immediately without waiting for old SW to die
       return self.skipWaiting();
     })
   );
 });
 
-/* ── ACTIVATE: clean up old caches ── */
+/* ── ACTIVATE: delete ALL old caches ── */
 self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
       return Promise.all(
-        keys.filter(function(key) { return key !== CACHE_NAME; })
-            .map(function(key)   { return caches.delete(key);  })
+        keys.map(function(key) {
+          /* Delete every cache that isn't the current one */
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
       );
     }).then(function() {
-      // Claim all open clients so the new SW is active immediately
       return self.clients.claim();
     })
   );
 });
 
-/* ── FETCH: serve from cache, fall back to network ── */
+/* ── FETCH: network-first, cache as offline fallback ── */
 self.addEventListener('fetch', function(event) {
-  // Only handle GET requests for same-origin or Google Fonts
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
@@ -57,24 +56,24 @@ self.addEventListener('fetch', function(event) {
   if (!isAppFile && !isFont) return;
 
   event.respondWith(
-    caches.match(event.request).then(function(cached) {
-      if (cached) return cached;
-
-      // Not in cache — fetch from network and cache it
-      return fetch(event.request).then(function(response) {
-        if (!response || response.status !== 200) return response;
-
-        var toCache = response.clone();
+    /* Always try network first */
+    fetch(event.request).then(function(response) {
+      if (response && response.status === 200) {
+        /* Update cache with fresh copy */
+        var copy = response.clone();
         caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, toCache);
+          cache.put(event.request, copy);
         });
-
-        return response;
-      }).catch(function() {
-        // Offline and not cached — return offline fallback for HTML
-        if (event.request.destination === 'document') {
-          return caches.match('./index.html');
-        }
+      }
+      return response;
+    }).catch(function() {
+      /* Offline — serve from cache */
+      return caches.match(event.request).then(function(cached) {
+        return cached || (
+          event.request.destination === 'document'
+            ? caches.match('./index.html')
+            : null
+        );
       });
     })
   );
